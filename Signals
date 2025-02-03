@@ -1,0 +1,61 @@
+from flask import Flask, request, jsonify
+import requests
+
+app = Flask(__name__)
+
+# Replace with your actual Discord Webhook URL
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1335826530370064394/6Nlb2z_xKcVrJ6gOwsxJdl-7EapCADYGCC6bL_Z531MiFMPqfbUyao6WPMDADWqD8H_5"
+
+@app.route('/tradingview', methods=['POST'])
+def tradingview_webhook():
+    try:
+        data = request.json  # Get TradingView JSON alert data
+
+        if not data:
+            return jsonify({"error": "Invalid data"}), 400
+
+        # Extract data from TradingView webhook
+        ticker = data.get("ticker", "Unknown")
+        price = data.get("close", "Unknown")
+        timeframe = data.get("timeframe", "Unknown")
+        signal_strength = data.get("signal_strength", "N/A")
+        condition = data.get("strategy", {}).get("order", {}).get("comment", "Unknown")
+
+        # Determine color for Discord Embed (Red for Bearish, Green for Bullish)
+        if "bearish" in condition.lower():
+            color = 0xFF0000  # Red
+            emoji = "🐻"  # Bear emoji for bearish
+        else:
+            color = 0x00FF00  # Green
+            emoji = "🐂"  # Rocket emoji for bullish
+
+        # Create a Discord Embed Message
+        discord_message = {
+            "embeds": [
+                {
+                    "title": f"💹 {ticker} Trade Alert",
+                    "description": f"**{condition.upper()} {emoji}**",
+                    "color": color,
+                    "fields": [
+                        {"name": "📌 Entry Price", "value": f"${price}", "inline": False},
+                        {"name": "⏳ Timeframe", "value": f"{timeframe}", "inline": False},
+                        {"name": "⭐ Signal Strength", "value": f"{signal_strength} ⭐", "inline": False}
+                    ],
+                    "footer": {"text": "Powered by BYTB Trading"}
+                }
+            ]
+        }
+
+        # Send the message to Discord
+        response = requests.post(DISCORD_WEBHOOK_URL, json=discord_message)
+
+        if response.status_code == 204:
+            return jsonify({"success": True}), 200
+        else:
+            return jsonify({"error": "Failed to send message to Discord"}), 500
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
