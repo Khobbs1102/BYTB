@@ -3,7 +3,6 @@ import requests
 
 app = Flask(__name__)
 
-# Replace with your actual Discord Webhook URL
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1335802330271973428/Jte3YJ76NL9p3v8lB-jVBtp2NiNFVBc7AqHsBxOsrUTCWIJgXdWoLtrh_Dlf5t23Nx29"
 
 @app.route('/tradingview', methods=['POST'])
